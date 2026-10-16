@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Warehouses\DeleteWarehouse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Warehouses\ListWarehousesRequest;
 use App\Http\Requests\Warehouses\StoreWarehouseRequest;
@@ -64,11 +65,13 @@ final class WarehouseController extends Controller
 
     /**
      * Delete a warehouse (admin only).
+     *
+     * Responds 409 `warehouse_in_use` once it has stock history or orders.
      */
     #[Authorize('delete', 'warehouse')]
-    public function destroy(Warehouse $warehouse): Response
+    public function destroy(Warehouse $warehouse, DeleteWarehouse $deleteWarehouse): Response
     {
-        $warehouse->delete();
+        $deleteWarehouse->handle($warehouse);
 
         return response()->noContent();
     }

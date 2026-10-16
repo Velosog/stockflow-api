@@ -2,8 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Actions\Stock\RecordStockMovement;
 use App\Enums\Role;
+use App\Enums\StockMovementType;
+use App\Models\Product;
+use App\Models\StockLevel;
 use App\Models\User;
+use App\Models\Warehouse;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -19,6 +25,13 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit');
+
+// Concurrency tests spawn separate PHP processes, which cannot see data inside
+// an uncommitted test transaction, so they commit and truncate instead.
+pest()->extend(TestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->group('concurrency')
+    ->in('Concurrency');
 
 /**
  * A random password that satisfies the password policy. Generated at runtime
@@ -38,6 +51,27 @@ function actingAsRole(Role $role): User
     Sanctum::actingAs($user);
 
     return $user;
+}
+
+/**
+ * Receive goods through the real ledger, so levels and movements stay consistent.
+ */
+function receiveStock(Product $product, Warehouse $warehouse, int $quantity): StockLevel
+{
+    app(RecordStockMovement::class)->handle(
+        User::factory()->create(),
+        $product->id,
+        $warehouse->id,
+        StockMovementType::Inbound,
+        $quantity,
+    );
+
+    return stockLevel($product, $warehouse);
+}
+
+function stockLevel(Product $product, Warehouse $warehouse): StockLevel
+{
+    return StockLevel::query()->where('product_id', $product->id)->where('warehouse_id', $warehouse->id)->sole();
 }
 
 /**

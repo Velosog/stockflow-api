@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\StockLevelController;
+use App\Http\Controllers\Api\V1\StockMovementController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WarehouseController;
 use Illuminate\Support\Facades\Route;
@@ -36,5 +39,23 @@ Route::prefix('v1')->name('v1.')->group(function (): void {
 
         Route::apiResource('warehouses', WarehouseController::class)
             ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+
+        Route::get('stock-levels', [StockLevelController::class, 'index'])->name('stock-levels.index');
+        Route::get('stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
+        Route::post('stock-movements', [StockMovementController::class, 'store'])
+            ->middleware('throttle:writes')
+            ->name('stock-movements.store');
+
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::post('orders', [OrderController::class, 'store'])
+            ->middleware(['throttle:writes', 'idempotent'])
+            ->name('orders.store');
+        Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::post('orders/{order}/confirm', [OrderController::class, 'confirm'])
+            ->middleware('throttle:writes')
+            ->name('orders.confirm');
+        Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])
+            ->middleware('throttle:writes')
+            ->name('orders.cancel');
     });
 });

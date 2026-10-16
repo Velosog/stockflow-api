@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Exceptions\ApiExceptionRenderer;
 use App\Exceptions\DomainRuleException;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsureIdempotentRequest;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(AssignRequestId::class);
 
         $middleware->api(prepend: [ForceJsonResponse::class], append: [SecurityHeaders::class]);
+
+        $middleware->alias(['idempotent' => EnsureIdempotentRequest::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Business rule violations are expected outcomes, not bugs.
