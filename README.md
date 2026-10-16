@@ -92,8 +92,8 @@ flowchart LR
 
     client --> mw --> authz --> fr --> ctrl --> act --> ledger --> db
     ctrl --> res --> client
-    ledger -. "dispatch after commit" .-> queue --> worker --> db
-    mw -. "any error" .-> problem -.-> client
+    ledger -.->|dispatch after commit| queue --> worker --> db
+    mw -.->|any error| problem -.-> client
 ```
 
 - **Controllers are thin**: they authorize (via Laravel 13 `#[Authorize]` attributes), take validated input and return an API Resource.
