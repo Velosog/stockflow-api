@@ -59,6 +59,7 @@ final class OrderController extends Controller
             $request->filled('customer_reference') ? $request->string('customer_reference')->toString() : null,
         );
 
+        /** @status 201 */
         return new OrderResource($order->load('items.product'));
     }
 

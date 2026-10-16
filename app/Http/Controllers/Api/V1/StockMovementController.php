@@ -59,6 +59,7 @@ final class StockMovementController extends Controller
             $request->filled('note') ? $request->string('note')->toString() : null,
         );
 
+        /** @status 201 */
         return new StockMovementResource($movement);
     }
 }

@@ -40,6 +40,7 @@ final class WarehouseController extends Controller
     #[Authorize('create', Warehouse::class)]
     public function store(StoreWarehouseRequest $request): WarehouseResource
     {
+        /** @status 201 */
         return new WarehouseResource(Warehouse::query()->create($request->validated()));
     }
 

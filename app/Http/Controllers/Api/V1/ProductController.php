@@ -40,6 +40,7 @@ final class ProductController extends Controller
     #[Authorize('create', Product::class)]
     public function store(StoreProductRequest $request): ProductResource
     {
+        /** @status 201 */
         return new ProductResource(Product::query()->create($request->validated()));
     }
 

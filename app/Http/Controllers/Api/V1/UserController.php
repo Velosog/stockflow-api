@@ -36,6 +36,7 @@ final class UserController extends Controller
     #[Authorize('create', User::class)]
     public function store(StoreUserRequest $request): UserResource
     {
+        /** @status 201 */
         return new UserResource(User::query()->create($request->validated()));
     }
 }

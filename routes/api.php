@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\StockLevelController;
@@ -57,5 +58,10 @@ Route::prefix('v1')->name('v1.')->group(function (): void {
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])
             ->middleware('throttle:writes')
             ->name('orders.cancel');
+
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+            ->whereUuid('notification')
+            ->name('notifications.read');
     });
 });

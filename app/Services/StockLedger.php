@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\StockMovementType;
 use App\Exceptions\InsufficientStockException;
 use App\Exceptions\StockAdjustmentConflictException;
+use App\Jobs\SendLowStockAlert;
 use App\Models\Order;
 use App\Models\StockLevel;
 use App\Models\StockMovement;
@@ -96,13 +97,15 @@ final class StockLedger
 
         $this->ensureInvariants($level, $type, $quantity, $onHand, $reserved);
 
+        $availableBefore = $level->available;
+
         $level->on_hand = $onHand;
         $level->reserved = $reserved;
         $level->save();
         // Re-read the generated "available" column computed by PostgreSQL.
         $level->refresh();
 
-        return StockMovement::query()->create([
+        $movement = StockMovement::query()->create([
             'product_id' => $level->product_id,
             'warehouse_id' => $level->warehouse_id,
             'type' => $type,
@@ -113,6 +116,29 @@ final class StockLedger
             'performed_by' => $performedBy?->id,
             'note' => $note,
         ]);
+
+        $this->alertIfCrossedLowStockThreshold($level, $availableBefore);
+
+        return $movement;
+    }
+
+    /**
+     * Alert only when available stock crosses the threshold downwards, not on
+     * every movement while it stays low. afterCommit(): the job is queued only
+     * once this transaction commits, so a rolled-back reservation never
+     * alerts and the worker never reads uncommitted data.
+     */
+    private function alertIfCrossedLowStockThreshold(StockLevel $level, int $availableBefore): void
+    {
+        if ($level->available >= $availableBefore) {
+            return;
+        }
+
+        $threshold = (int) $level->product()->value('low_stock_threshold');
+
+        if ($availableBefore >= $threshold && $level->available < $threshold) {
+            SendLowStockAlert::dispatch($level->id)->afterCommit();
+        }
     }
 
     private function ensureInTransaction(): void

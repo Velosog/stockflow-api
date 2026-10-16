@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -38,6 +41,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->configureRateLimiting();
+
+        // OpenAPI: every operation uses bearer tokens unless marked
+        // @unauthenticated in its docblock (login).
+        Scramble::configure()->withDocumentTransformers(function (OpenApi $openApi): void {
+            $openApi->secure(SecurityScheme::http('bearer'));
+        });
     }
 
     private function configureRateLimiting(): void
