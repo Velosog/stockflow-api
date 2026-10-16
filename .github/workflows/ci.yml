@@ -127,11 +127,12 @@ jobs:
       - name: Generate application key
         run: docker compose run --rm --no-deps app php artisan key:generate --force --no-interaction
 
+      # Same order as the README: migrate before the worker starts polling.
+      - name: Migrate and seed
+        run: docker compose run --rm app php artisan migrate --seed --force --no-interaction
+
       - name: Start stack
         run: docker compose up -d --wait
-
-      - name: Migrate and seed
-        run: docker compose exec -T app php artisan migrate --seed --force --no-interaction
 
       - name: Smoke test
         run: |

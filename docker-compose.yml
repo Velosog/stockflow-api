@@ -24,16 +24,29 @@ services:
         <<: *php
         ports:
             - "${FORWARD_APP_PORT:-8000}:8000"
+        # Replaces the image's default check (Caddy admin port) with Laravel's
+        # health route, so "healthy" means the application actually boots.
+        healthcheck:
+            test: ["CMD", "curl", "-fsS", "http://localhost:8000/up"]
+            interval: 10s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
         restart: unless-stopped
 
     queue:
         <<: *php
         command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=10", "--sleep=1", "--max-time=3600"]
+        # No web server runs here, so the image's HTTP health check does not apply.
+        healthcheck:
+            disable: true
         restart: unless-stopped
 
     scheduler:
         <<: *php
         command: ["php", "artisan", "schedule:work"]
+        healthcheck:
+            disable: true
         restart: unless-stopped
 
     postgres:
