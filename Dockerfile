@@ -4,7 +4,8 @@
 # and the same image runs the queue worker and the scheduler.
 FROM dunglas/frankenphp:1-php8.4-trixie
 
-RUN install-php-extensions pdo_pgsql intl zip opcache pcntl
+RUN install-php-extensions pdo_pgsql intl zip opcache pcntl \
+    && printf "expose_php = Off\nmemory_limit = 256M\n" > "$PHP_INI_DIR/conf.d/zz-stockflow.ini"
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

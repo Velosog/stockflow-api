@@ -2,8 +2,39 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
+/*
+| Every route except login requires a Sanctum bearer token and is authorized
+| by a policy (see the #[Authorize] attributes on each controller method).
+| "throttle:api" applies to all authenticated traffic; "throttle:writes" is an
+| extra, stricter limit on mutating requests.
+*/
+
 Route::prefix('v1')->name('v1.')->group(function (): void {
-    //
+    Route::post('auth/login', [AuthController::class, 'login'])
+        ->middleware('throttle:login')
+        ->name('auth.login');
+
+    Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
+        Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
+        Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::post('users', [UserController::class, 'store'])->middleware('throttle:writes')->name('users.store');
+
+        Route::post('products/{product}/restore', [ProductController::class, 'restore'])
+            ->withTrashed()
+            ->middleware('throttle:writes')
+            ->name('products.restore');
+        Route::apiResource('products', ProductController::class)
+            ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+
+        Route::apiResource('warehouses', WarehouseController::class)
+            ->middlewareFor(['store', 'update', 'destroy'], 'throttle:writes');
+    });
 });
