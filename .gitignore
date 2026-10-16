@@ -1,0 +1,37 @@
+# Environment files (secrets). Only the placeholder template is versioned.
+.env
+.env.*
+!.env.example
+/auth.json
+
+# Dependencies and build output
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+
+# Test and analysis artifacts
+.phpunit.result.cache
+/.phpunit.cache
+/coverage
+/build
+*.sqlite
+*.sqlite-journal
+
+# Logs
+*.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.phpactor.json
+_ide_helper.php
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.vscode
+/.zed
